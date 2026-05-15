@@ -445,6 +445,15 @@ const BASE_RAW=[
 
 function ed(s){if(!s||isNaN(s))return null;const d=new Date(Math.round((s-25569)*86400*1000));return new Date(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate());}
 
+// Timezone-safe date parser — "2026-05-16" → 16 Mayıs olarak okur
+function parseDate(s){
+  if(!s) return null;
+  const str = String(s).trim().split('T')[0]; // "2026-05-16T00:00:00" → "2026-05-16"
+  const parts = str.split('-');
+  if(parts.length === 3) return new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+  return new Date(s);
+}
+
 // STATE
 let ctab='all',tf='all',scol='vade',sdir=1,eid=null,ftype='odeme',fps2='bekliyor',nid=10000;
 const TODAY=new Date();TODAY.setHours(0,0,0,0);
@@ -476,7 +485,7 @@ async function loadFromSheets(){
       // Sheets'te veri var — onları kullan
       recs=data.records.map(r=>({
         id:String(r.id),
-        date:r.tarih?new Date(r.tarih):null,
+        date:r.tarih?parseDate(r.tarih):null,
         tutar:parseFloat(r.tutar)||0,
         type:r.type||'odeme',
         lehtar:r.lehtar||'',
