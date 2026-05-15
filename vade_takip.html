@@ -445,12 +445,17 @@ const BASE_RAW=[
 
 function ed(s){if(!s||isNaN(s))return null;const d=new Date(Math.round((s-25569)*86400*1000));return new Date(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate());}
 
-// Timezone-safe date parser — "2026-05-16" → 16 Mayıs olarak okur
+// Timezone-safe date parser
 function parseDate(s){
   if(!s) return null;
-  const str = String(s).trim().split('T')[0]; // "2026-05-16T00:00:00" → "2026-05-16"
-  const parts = str.split('-');
+  const str = String(s).trim();
+  // Sheets'ten gelen "2026-05-16T21:00:00.000Z" gibi ISO string
+  // sadece tarih kısmını al, saat dilimine bakma
+  const datePart = str.split('T')[0]; // "2026-05-16"
+  const parts = datePart.split('-');
   if(parts.length === 3) return new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+  // Sheets Date serial number olarak gelirse
+  if(!isNaN(str)) return ed(parseFloat(str));
   return new Date(s);
 }
 
@@ -721,8 +726,16 @@ function remInfo(){
   else el.textContent='Boş bırakırsanız ayrı hatırlatma kurulmaz.';
 }
 
+function dateToStr(d){
+  if(!d) return '';
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,'0');
+  const day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
 function recToSheets(r){
-  return{id:String(r.id),tarih:r.date?r.date.toISOString().split('T')[0]:'',tutar:r.tutar,type:r.type,lehtar:r.lehtar||'',banka:r.banka||'',cekno:r.cekno||'',aciklama:r.aciklama||'',ps:r.ps||'bekliyor',reminder:r.reminder!=null?r.reminder:''};
+  return{id:String(r.id),tarih:r.date?dateToStr(r.date):'',tutar:r.tutar,type:r.type,lehtar:r.lehtar||'',banka:r.banka||'',cekno:r.cekno||'',aciklama:r.aciklama||'',ps:r.ps||'bekliyor',reminder:r.reminder!=null?r.reminder:''};
 }
 
 async function saveRecord(){
